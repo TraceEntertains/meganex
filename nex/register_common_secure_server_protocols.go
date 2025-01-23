@@ -1,8 +1,9 @@
 package nex
 
 import (
-	"github.com/PretendoNetwork/nex-go/v2/types"
 	"meganex/globals"
+
+	"github.com/PretendoNetwork/nex-go/v2/types"
 
 	commonsecure "github.com/PretendoNetwork/nex-protocols-common-go/v2/secure-connection"
 	secure "github.com/PretendoNetwork/nex-protocols-go/v2/secure-connection"
@@ -18,6 +19,11 @@ import (
 
 	commonmatchmakeextension "github.com/PretendoNetwork/nex-protocols-common-go/v2/matchmake-extension"
 	matchmakeextension "github.com/PretendoNetwork/nex-protocols-go/v2/matchmake-extension"
+
+	megadatastore "meganex/nex/datastore"
+
+	commondatastore "github.com/PretendoNetwork/nex-protocols-common-go/v2/datastore"
+	datastore "github.com/PretendoNetwork/nex-protocols-go/v2/datastore"
 )
 
 func registerCommonSecureServerProtocols() {
@@ -57,6 +63,13 @@ func registerCommonSecureServerProtocols() {
 			globals.SecureEndpoint.RegisterServiceProtocol(matchmakeExtensionProtocol)
 			commonMatchmakeExtensionProtocol := commonmatchmakeextension.NewCommonProtocol(matchmakeExtensionProtocol)
 			commonMatchmakeExtensionProtocol.SetManager(globals.MatchmakingManager)
+
+		case "datastore":
+			datastoreProtocol := datastore.NewProtocol()
+			globals.SecureEndpoint.RegisterServiceProtocol(datastoreProtocol)
+			commonDatastoreProtocol := commondatastore.NewCommonProtocol(datastoreProtocol)
+			megadatastore.Database = globals.Postgres
+			megadatastore.NewDatastoreProtocol(commonDatastoreProtocol)
 
 		default:
 			globals.Logger.Warningf("Ignoring unknown protocol \"%v\"!", protocol)
