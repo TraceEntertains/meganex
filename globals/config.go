@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+const EnvPrefix string = "PN_MEGANEX"
+
 type NexConfigSpec struct {
 	GameName           string `required:"true"`
 	UseStructureHeader bool

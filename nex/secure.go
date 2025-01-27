@@ -5,6 +5,7 @@ import (
 	"github.com/PretendoNetwork/nex-go/v2"
 	common_globals "github.com/PretendoNetwork/nex-protocols-common-go/v2/globals"
 	"meganex/globals"
+	"slices"
 	"strings"
 )
 
@@ -29,6 +30,21 @@ func StartSecureServer() {
 		globals.Logger.Infof("Protocol ID: %d", request.ProtocolID)
 		globals.Logger.Infof("Method ID: %d", request.MethodID)
 		globals.Logger.Info(strings.Repeat("=", len(header)))
+
+		if !slices.Contains(StartedSecureProtocols, request.ProtocolID) {
+			name, protocol := FindProtocolByID(request.ProtocolID)
+
+			if protocol == nil {
+				globals.Logger.Errorf("This protocol (%v) is unknown! Please file an issue against meganex.", request.ProtocolID)
+			} else {
+				globals.Logger.Errorf("This game uses protocol \"%v\", which is not running!", name)
+				if protocol.init != nil {
+					globals.Logger.Infof("You may want to add \"%v\" to %v_SECUREPROTOCOLS: %v", name, globals.EnvPrefix, strings.Join(append(globals.NexConfig.SecureProtocols, name), ","))
+				} else {
+					globals.Logger.Info("meganex does not currently implement this protocol - please file an issue report!")
+				}
+			}
+		}
 	})
 
 	globals.SecureEndpoint.OnError(func(err *nex.Error) {
