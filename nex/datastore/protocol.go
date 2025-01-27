@@ -4,10 +4,18 @@ import (
 	commondatastore "github.com/PretendoNetwork/nex-protocols-common-go/v2/datastore"
 )
 
-func NewDatastoreProtocol(protocol *commondatastore.CommonProtocol) {
-	initDatabase()
+func NewDatastoreProtocol(protocol *commondatastore.CommonProtocol) error {
+	err := initDatabase()
+	if err != nil {
+		return err
+	}
 
 	protocol.InitializeObjectByPreparePostParam = InitializeObjectByPreparePostParam
+	protocol.InitializeObjectRatingWithSlot = InitializeObjectRatingWithSlot
+
+	protocol.GetObjectInfoByPersistenceTargetWithPassword = GetObjectInfoByPersistenceTargetWithPassword
+	protocol.GetObjectInfoByDataIDWithPassword = GetObjectInfoByDataIDWithPassword
+	return nil
 }
 
 // func GetObjectInfoByDataID(dataID types.UInt64) (datastore_types.DataStoreMetaInfo, *nex.Error) {
@@ -26,9 +34,6 @@ func NewDatastoreProtocol(protocol *commondatastore.CommonProtocol) {
 
 // }
 // func UpdateObjectUploadCompletedByDataID(dataID types.UInt64, uploadCompleted bool) *nex.Error {
-
-// }
-// func GetObjectInfoByPersistenceTargetWithPassword(persistenceTarget datastore_types.DataStorePersistenceTarget, password types.UInt64) (datastore_types.DataStoreMetaInfo, *nex.Error) {
 
 // }
 // func GetObjectInfoByDataIDWithPassword(dataID types.UInt64, password types.UInt64) (datastore_types.DataStoreMetaInfo, *nex.Error) {

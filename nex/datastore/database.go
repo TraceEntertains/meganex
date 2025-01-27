@@ -2,20 +2,31 @@ package datastore
 
 import (
 	"database/sql"
+	"github.com/PretendoNetwork/nex-go/v2/types"
+	datastoretypes "github.com/PretendoNetwork/nex-protocols-go/v2/datastore/types"
+	"github.com/lib/pq"
 	"meganex/globals"
+	"time"
 )
-
-// var selectByDataIdStmt *sql.Stmt
-// var selectByNameAndOwnerStmt *sql.Stmt
-
-// var updateMetaBinaryStmt *sql.Stmt
-// var updatePeriodStmt *sql.Stmt
 
 var Database *sql.DB
 
-func initDatabase() {
-	initTables()
-	initInsertObjectStmt()
+func initDatabase() error {
+	inits := []func() error{
+		initTables,
+		initInsertObjectStmt,                   // initialize_object_by_prepare_post_param.go
+		initSelectObjectByIdPasswordStmt,       // get_object_info_by_data_id_with_password.go
+		initSelectObjectByOwnerPersistenceStmt, // get_object_info_by_persistence_target_with_password.go
+	}
+
+	for _, init := range inits {
+		err := init()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func initTables() error {
@@ -67,4 +78,81 @@ func initTables() error {
 
 	globals.Logger.Success("Postgres tables created")
 	return nil
+}
+
+const selectObject = `
+	SELECT
+		data_id,
+		owner,
+		size,
+		name,
+		data_type,
+		meta_binary,
+		permission,
+		permission_recipients,
+		delete_permission,
+		delete_permission_recipients,
+		flag,
+		period,
+		refer_data_id,
+		tags,
+		creation_date,
+		update_date
+	FROM datastore.objects`
+
+// Helper to unpack things selected with (selectObject + ` WHERE ....`)
+func getObjects(stmt *sql.Stmt, args ...any) ([]datastoretypes.DataStoreMetaInfo, error) {
+	rows, err := stmt.Query(args...)
+	if err != nil {
+		return nil, err
+	}
+	defer func(rows *sql.Rows) {
+		_ = rows.Close()
+	}(rows)
+
+	// surely we know the length of the result set at this point?
+	var results []datastoretypes.DataStoreMetaInfo
+
+	for rows.Next() {
+		result := datastoretypes.NewDataStoreMetaInfo()
+
+		var createdTime time.Time
+		var updatedTime time.Time
+
+		// TODO check this - it's stolen from SMM DataStore but seems fifty shades of fucked up for a generic impl
+		result.ExpireTime = types.NewDateTime(0x9C3f3E0000) // * 9999-12-31T00:00:00.000Z. This is what the real server sends
+
+		err := rows.Scan(
+			&result.DataID,
+			&result.OwnerID,
+			&result.Size,
+			&result.Name,
+			&result.DataType,
+			&result.MetaBinary,
+			&result.Permission.Permission,
+			pq.Array(&result.Permission.RecipientIDs),
+			&result.DelPermission.Permission,
+			pq.Array(&result.DelPermission.RecipientIDs),
+			&result.Flag,
+			&result.Period,
+			&result.ReferDataID,
+			pq.Array(&result.Tags),
+			&createdTime,
+			&updatedTime,
+		)
+		if err != nil {
+			return nil, err
+			//globals.Logger.Error(err.Error())
+			//continue
+		}
+
+		// I'm not sure how this API is meant to be used but this works
+		result.CreatedTime = result.CreatedTime.FromTimestamp(createdTime)
+		result.UpdatedTime = result.UpdatedTime.FromTimestamp(updatedTime)
+		result.ReferredTime = result.ReferredTime.FromTimestamp(createdTime)
+
+		results = append(results, result)
+	}
+
+	return results, rows.Err()
 }

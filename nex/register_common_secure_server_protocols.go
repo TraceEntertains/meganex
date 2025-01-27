@@ -63,13 +63,15 @@ func registerCommonSecureServerProtocols() {
 			globals.SecureEndpoint.RegisterServiceProtocol(matchmakeExtensionProtocol)
 			commonMatchmakeExtensionProtocol := commonmatchmakeextension.NewCommonProtocol(matchmakeExtensionProtocol)
 			commonMatchmakeExtensionProtocol.SetManager(globals.MatchmakingManager)
+			commonMatchmakeExtensionProtocol.CleanupSearchMatchmakeSession = CleanupSearchMatchmakeSession
+			commonMatchmakeExtensionProtocol.CleanupMatchmakeSessionSearchCriterias = CleanupMatchmakeSessionSearchCriterias
 
 		case "datastore":
 			datastoreProtocol := datastore.NewProtocol()
 			globals.SecureEndpoint.RegisterServiceProtocol(datastoreProtocol)
 			commonDatastoreProtocol := commondatastore.NewCommonProtocol(datastoreProtocol)
 			megadatastore.Database = globals.Postgres
-			megadatastore.NewDatastoreProtocol(commonDatastoreProtocol)
+			_ = megadatastore.NewDatastoreProtocol(commonDatastoreProtocol)
 
 		default:
 			globals.Logger.Warningf("Ignoring unknown protocol \"%v\"!", protocol)

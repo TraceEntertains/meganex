@@ -2,18 +2,21 @@ package datastore
 
 import (
 	"database/sql"
+	"meganex/globals"
 	"time"
 
 	"github.com/PretendoNetwork/nex-go/v2"
 	types "github.com/PretendoNetwork/nex-go/v2/types"
-	datastore_types "github.com/PretendoNetwork/nex-protocols-go/v2/datastore/types"
+	datastoretypes "github.com/PretendoNetwork/nex-protocols-go/v2/datastore/types"
 	"github.com/lib/pq"
 )
 
 var insertObjectStmt *sql.Stmt
 
-func InitializeObjectByPreparePostParam(ownerPID types.PID, param datastore_types.DataStorePreparePostParam) (uint64, *nex.Error) {
+func InitializeObjectByPreparePostParam(ownerPID types.PID, param datastoretypes.DataStorePreparePostParam) (uint64, *nex.Error) {
 	now := time.Now()
+
+	globals.Logger.Infof("posting %v", param.FormatToString(0))
 
 	var dataID uint64
 
