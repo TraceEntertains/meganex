@@ -2,8 +2,6 @@ package nex
 
 import (
 	"github.com/PretendoNetwork/nex-go/v2/types"
-	commonmatchmakingext "github.com/PretendoNetwork/nex-protocols-common-go/v2/match-making-ext"
-	matchmakingext "github.com/PretendoNetwork/nex-protocols-go/v2/match-making-ext"
 	"meganex/globals"
 
 	commonsecure "github.com/PretendoNetwork/nex-protocols-common-go/v2/secure-connection"
@@ -15,13 +13,20 @@ import (
 	commonmatchmaking "github.com/PretendoNetwork/nex-protocols-common-go/v2/match-making"
 	matchmaking "github.com/PretendoNetwork/nex-protocols-go/v2/match-making"
 
+	commonmatchmakingext "github.com/PretendoNetwork/nex-protocols-common-go/v2/match-making-ext"
+	matchmakingext "github.com/PretendoNetwork/nex-protocols-go/v2/match-making-ext"
+
 	commonmatchmakeextension "github.com/PretendoNetwork/nex-protocols-common-go/v2/matchmake-extension"
 	matchmakeextension "github.com/PretendoNetwork/nex-protocols-go/v2/matchmake-extension"
 
-	megadatastore "meganex/nex/datastore"
-
 	commondatastore "github.com/PretendoNetwork/nex-protocols-common-go/v2/datastore"
 	datastore "github.com/PretendoNetwork/nex-protocols-go/v2/datastore"
+
+	commonranking "github.com/PretendoNetwork/nex-protocols-common-go/v2/ranking"
+	ranking "github.com/PretendoNetwork/nex-protocols-go/v2/ranking"
+
+	megadatastore "meganex/nex/datastore"
+	megaranking "meganex/nex/ranking"
 )
 
 type ProtocolHandler struct {
@@ -79,13 +84,25 @@ var SecureProtocols = map[string]ProtocolHandler{
 		commonMatchmakeExtensionProtocol.CleanupMatchmakeSessionSearchCriterias = CleanupMatchmakeSessionSearchCriterias
 	}},
 	"utility": {110, nil}, // todo: storagemanager?
-	"ranking": {112, nil},
+	"ranking": {112, func() {
+		rankingProtocol := ranking.NewProtocol()
+		globals.SecureEndpoint.RegisterServiceProtocol(rankingProtocol)
+		commonRankingProtocol := commonranking.NewCommonProtocol(rankingProtocol)
+		megaranking.Database = globals.Postgres
+		err := megaranking.NewDatastoreProtocol(commonRankingProtocol)
+		if err != nil {
+			globals.Logger.Error(err.Error())
+		}
+	}},
 	"datastore": {115, func() {
 		datastoreProtocol := datastore.NewProtocol()
 		globals.SecureEndpoint.RegisterServiceProtocol(datastoreProtocol)
 		commonDatastoreProtocol := commondatastore.NewCommonProtocol(datastoreProtocol)
 		megadatastore.Database = globals.Postgres
-		_ = megadatastore.NewDatastoreProtocol(commonDatastoreProtocol)
+		err := megadatastore.NewDatastoreProtocol(commonDatastoreProtocol)
+		if err != nil {
+			globals.Logger.Error(err.Error())
+		}
 	}},
 	"debug":            {116, nil},
 	"subscription":     {117, nil},
