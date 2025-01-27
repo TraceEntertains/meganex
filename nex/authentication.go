@@ -24,8 +24,8 @@ func StartAuthenticationServer() {
 
 		header := fmt.Sprintf("==%v - Auth==", globals.NexConfig.GameName)
 		globals.Logger.Info(header)
-		globals.Logger.Infof("Protocol ID: %d\n", request.ProtocolID)
-		globals.Logger.Infof("Method ID: %d\n", request.MethodID)
+		globals.Logger.Infof("Protocol ID: %d", request.ProtocolID)
+		globals.Logger.Infof("Method ID: %d", request.MethodID)
 		globals.Logger.Info(strings.Repeat("=", len(header)))
 	})
 
