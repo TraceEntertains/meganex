@@ -82,6 +82,8 @@ var SecureProtocols = map[string]ProtocolHandler{
 		commonMatchmakeExtensionProtocol.SetManager(globals.MatchmakingManager)
 		commonMatchmakeExtensionProtocol.CleanupSearchMatchmakeSession = CleanupSearchMatchmakeSession
 		commonMatchmakeExtensionProtocol.CleanupMatchmakeSessionSearchCriterias = CleanupMatchmakeSessionSearchCriterias
+
+		matchmakeExtensionProtocol.SetHandlerGetPlayingSession(GetPlayingSession)
 	}},
 	"utility": {110, nil}, // todo: storagemanager?
 	"ranking": {112, func() {
