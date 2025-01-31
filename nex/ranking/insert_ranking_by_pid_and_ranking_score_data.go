@@ -37,6 +37,9 @@ func InsertRankingByPIDAndRankingScoreData(pid types.PID, rankingScoreData ranki
 		rankingScoreData.Param,
 		now,
 	)
+	if err != nil {
+		return nex.NewError(nex.ResultCodes.Core.SystemError, err.Error())
+	}
 
 	err = tx.Commit()
 	if err != nil {

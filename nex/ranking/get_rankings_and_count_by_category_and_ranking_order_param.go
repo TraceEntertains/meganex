@@ -64,7 +64,7 @@ func initGetGlobalRankingsStmt() error {
 		    ranking.scores.score,
 		    ranking.scores.param,
 		    ranking.scores.update_date,
-		    ranking.common_data.data,
+		    COALESCE(ranking.common_data.data, ''::bytea),
 		    CASE WHEN $2 THEN
 		        RANK() OVER (ORDER BY 
 		            CASE WHEN cat.golf_scoring THEN ranking.scores.score END DESC,
