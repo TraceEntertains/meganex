@@ -14,6 +14,9 @@ func NewDatastoreProtocol(protocol *commondatastore.CommonProtocol) error {
 	if globals.MinIOClient != nil {
 		protocol.SetMinIOClient(globals.MinIOClient)
 		protocol.S3Bucket = globals.NexConfig.DatastoreS3Bucket
+
+		protocol.SetDataKeyBase("object")
+		protocol.SetNotifyKeyBase("notif")
 	}
 
 	protocol.InitializeObjectByPreparePostParam = InitializeObjectByPreparePostParam
