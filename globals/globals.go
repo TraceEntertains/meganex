@@ -2,6 +2,7 @@ package globals
 
 import (
 	"database/sql"
+	"github.com/minio/minio-go/v7"
 
 	"github.com/PretendoNetwork/nex-go/v2"
 	common_globals "github.com/PretendoNetwork/nex-protocols-common-go/v2/globals"
@@ -27,3 +28,5 @@ var MatchmakingManager *common_globals.MatchmakingManager
 var GRPCAccountClientConnection *grpc.ClientConn
 var GRPCAccountClient pbaccount.AccountClient
 var GRPCAccountCommonMetadata metadata.MD
+
+var MinIOClient *minio.Client

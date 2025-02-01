@@ -7,6 +7,8 @@ import (
 	"github.com/PretendoNetwork/plogger-go"
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
@@ -45,6 +47,10 @@ func init() {
 	accountGRPCHost := os.Getenv(globals.EnvPrefix + "_ACCOUNT_GRPC_HOST")
 	accountGRPCPort := os.Getenv(globals.EnvPrefix + "_ACCOUNT_GRPC_PORT")
 	accountGRPCAPIKey := os.Getenv(globals.EnvPrefix + "_ACCOUNT_GRPC_API_KEY")
+	s3Endpoint := os.Getenv(globals.EnvPrefix + "_CONFIG_S3_ENDPOINT")
+	s3AccessKey := os.Getenv(globals.EnvPrefix + "_CONFIG_S3_ACCESS_KEY")
+	s3AccessSecret := os.Getenv(globals.EnvPrefix + "_CONFIG_S3_ACCESS_SECRET")
+	s3SecureEnv := os.Getenv(globals.EnvPrefix + "_CONFIG_S3_SECURE")
 
 	if strings.TrimSpace(kerberosPassword) == "" {
 		globals.Logger.Warningf(globals.EnvPrefix+"_KERBEROS_PASSWORD environment variable not set. Using default password: %q", globals.KerberosPassword)
@@ -122,4 +128,22 @@ func init() {
 		globals.Logger.Critical(err.Error())
 	}
 	globals.Logger.Success("Connected to Postgres!")
+
+	staticCredentials := credentials.NewStaticV4(s3AccessKey, s3AccessSecret, "")
+	s3Secure, err := strconv.ParseBool(s3SecureEnv)
+	if err != nil {
+		globals.Logger.Warningf(globals.EnvPrefix+"_CONFIG_S3_SECURE environment variable not set. Using default value: %t", true)
+		s3Secure = true
+	}
+
+	minIOClient, err := minio.New(s3Endpoint, &minio.Options{
+		Creds:  staticCredentials,
+		Secure: s3Secure,
+	})
+	if err != nil {
+		globals.Logger.Warningf("Failed to connect to S3: %v", err)
+		globals.Logger.Warning("Datastore uploads may not work.")
+	} else {
+		globals.MinIOClient = minIOClient
+	}
 }

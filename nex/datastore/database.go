@@ -17,6 +17,15 @@ func initDatabase() error {
 		initInsertObjectStmt,                   // initialize_object_by_prepare_post_param.go
 		initSelectObjectByIdPasswordStmt,       // get_object_info_by_data_id_with_password.go
 		initSelectObjectByOwnerPersistenceStmt, // get_object_info_by_persistence_target_with_password.go
+		initSelectObjectByIdStmt,               // get_object_info_by_data_id.go
+		initSelectOwnerByIdStmt,                // get_object_owner_by_data_id.go
+		initSelectSizeByIdStmt,                 // get_object_size_by_data_id.go
+		initUpdateUploadCompleteByIdStmt,       // update_object_upload_completed_by_data_id.go
+		initUpdateMetaBinaryByIdPasswordStmt,   // update_object_meta_binary_by_data_id_with_password.go
+		initUpdatePeriodByIdPasswordStmt,       // update_object_period_by_data_id_with_password.go
+		initUpdateDataTypeByIdPasswordStmt,     // update_object_data_type_by_data_id_with_password.go
+		initUpdateDeletedByIdStmt,              // delete_object_by_data_id.go
+		initUpdateDeletedByIdPasswordStmt,      // delete_object_by_data_id_with_password.go
 	}
 
 	for _, init := range inits {
