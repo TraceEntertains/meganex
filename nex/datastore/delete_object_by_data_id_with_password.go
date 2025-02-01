@@ -5,12 +5,17 @@ import (
 	"errors"
 	"github.com/PretendoNetwork/nex-go/v2"
 	"github.com/PretendoNetwork/nex-go/v2/types"
+	"meganex/globals"
 	"time"
 )
 
 var updateDeletedByIdPasswordStmt *sql.Stmt
 
 func DeleteObjectByDataIDWithPassword(dataID types.UInt64, password types.UInt64) *nex.Error {
+	if globals.NexConfig.DatastoreTrace {
+		globals.Logger.Infof("dataID: %v\npassword: %v", dataID, password)
+	}
+
 	result, err := updateDeletedByIdPasswordStmt.Exec(dataID, password, true, time.Now())
 	if errors.Is(err, sql.ErrNoRows) {
 		return nex.NewError(nex.ResultCodes.DataStore.NotFound, "Object not found or wrong password")

@@ -6,11 +6,16 @@ import (
 	"github.com/PretendoNetwork/nex-go/v2"
 	"github.com/PretendoNetwork/nex-go/v2/types"
 	datastoretypes "github.com/PretendoNetwork/nex-protocols-go/v2/datastore/types"
+	"meganex/globals"
 )
 
 var selectObjectByIdPasswordStmt *sql.Stmt
 
 func GetObjectInfoByDataIDWithPassword(dataID types.UInt64, password types.UInt64) (datastoretypes.DataStoreMetaInfo, *nex.Error) {
+	if globals.NexConfig.DatastoreTrace {
+		globals.Logger.Infof("dataID: %v\npassword: %v", dataID, password)
+	}
+
 	objects, err := getObjects(selectObjectByIdPasswordStmt, dataID, password)
 	if errors.Is(err, sql.ErrNoRows) || len(objects) < 1 {
 		// todo nex.ResultCodes.DataStore.InvalidPassword return?
@@ -19,6 +24,9 @@ func GetObjectInfoByDataIDWithPassword(dataID types.UInt64, password types.UInt6
 		return datastoretypes.NewDataStoreMetaInfo(), nex.NewError(nex.ResultCodes.DataStore.SystemFileError, err.Error())
 	}
 
+	if globals.NexConfig.DatastoreTrace {
+		globals.Logger.Infof("result: %v", objects[0])
+	}
 	return objects[0], nil
 }
 

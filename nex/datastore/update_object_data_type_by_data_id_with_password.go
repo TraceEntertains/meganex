@@ -5,12 +5,17 @@ import (
 	"errors"
 	"github.com/PretendoNetwork/nex-go/v2"
 	"github.com/PretendoNetwork/nex-go/v2/types"
+	"meganex/globals"
 	"time"
 )
 
 var updateDataTypeByIdPasswordStmt *sql.Stmt
 
 func UpdateObjectDataTypeByDataIDWithPassword(dataID types.UInt64, dataType types.UInt16, password types.UInt64) *nex.Error {
+	if globals.NexConfig.DatastoreTrace {
+		globals.Logger.Infof("dataID: %v\ndataType: %v\npassword: %v", dataID, dataType, password)
+	}
+
 	result, err := updateDataTypeByIdPasswordStmt.Exec(dataID, password, dataType, time.Now())
 	if errors.Is(err, sql.ErrNoRows) {
 		return nex.NewError(nex.ResultCodes.DataStore.NotFound, "Object not found or wrong password")

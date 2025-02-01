@@ -2,6 +2,7 @@ package datastore
 
 import (
 	"database/sql"
+	"meganex/globals"
 	"time"
 
 	"github.com/PretendoNetwork/nex-go/v2"
@@ -13,8 +14,11 @@ import (
 var insertObjectStmt *sql.Stmt
 
 func InitializeObjectByPreparePostParam(ownerPID types.PID, param datastoretypes.DataStorePreparePostParam) (uint64, *nex.Error) {
-	now := time.Now()
+	if globals.NexConfig.DatastoreTrace {
+		globals.Logger.Infof("ownerPID: %v\nparam: %v", ownerPID, param)
+	}
 
+	now := time.Now()
 	var dataID uint64
 
 	err := insertObjectStmt.QueryRow(

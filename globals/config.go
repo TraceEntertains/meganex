@@ -24,6 +24,7 @@ type NexConfigSpec struct {
 	MatchmakingZeroAttributes []int
 
 	DatastoreS3Bucket string `envconfig:"CONFIG_S3_BUCKET"`
+	DatastoreTrace    bool   `default:"false"`
 }
 
 // FormatToString pretty-prints the NexConfigSpec using the provided indentation level
@@ -45,6 +46,7 @@ func (nc *NexConfigSpec) FormatToString(indentationLevel int) string {
 	b.WriteString(fmt.Sprintf("%sSecureProtocols: %v,\n", indentationValues, nc.SecureProtocols))
 	b.WriteString(fmt.Sprintf("%sMatchmakingZeroAttributes: %v,\n", indentationValues, nc.MatchmakingZeroAttributes))
 	b.WriteString(fmt.Sprintf("%sDatastoreS3Bucket: %v,\n", indentationValues, nc.DatastoreS3Bucket))
+	b.WriteString(fmt.Sprintf("%sDatastoreTrace: %v,\n", indentationValues, nc.DatastoreTrace))
 	b.WriteString(fmt.Sprintf("%s}", indentationEnd))
 
 	return b.String()

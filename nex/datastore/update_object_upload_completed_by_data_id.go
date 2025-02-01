@@ -5,12 +5,17 @@ import (
 	"errors"
 	"github.com/PretendoNetwork/nex-go/v2"
 	"github.com/PretendoNetwork/nex-go/v2/types"
+	"meganex/globals"
 	"time"
 )
 
 var updateUploadCompleteByIdStmt *sql.Stmt
 
 func UpdateObjectUploadCompletedByDataID(dataID types.UInt64, uploadCompleted bool) *nex.Error {
+	if globals.NexConfig.DatastoreTrace {
+		globals.Logger.Infof("dataID: %v\nuploadCompleted: %v", dataID, uploadCompleted)
+	}
+
 	result, err := updateUploadCompleteByIdStmt.Exec(dataID, uploadCompleted, time.Now())
 	if errors.Is(err, sql.ErrNoRows) {
 		return nex.NewError(nex.ResultCodes.DataStore.NotFound, "Object not found or wrong password")

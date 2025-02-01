@@ -5,12 +5,17 @@ import (
 	"errors"
 	"github.com/PretendoNetwork/nex-go/v2"
 	"github.com/PretendoNetwork/nex-go/v2/types"
+	"meganex/globals"
 	"time"
 )
 
 var updateMetaBinaryByIdPasswordStmt *sql.Stmt
 
 func UpdateObjectMetaBinaryByDataIDWithPassword(dataID types.UInt64, metaBinary types.QBuffer, password types.UInt64) *nex.Error {
+	if globals.NexConfig.DatastoreTrace {
+		globals.Logger.Infof("dataID: %v\nmetaBinary: %v\npassword: %v", dataID, metaBinary, password)
+	}
+
 	result, err := updateMetaBinaryByIdPasswordStmt.Exec(dataID, password, metaBinary, time.Now())
 	if errors.Is(err, sql.ErrNoRows) {
 		return nex.NewError(nex.ResultCodes.DataStore.NotFound, "Object not found or wrong password")
