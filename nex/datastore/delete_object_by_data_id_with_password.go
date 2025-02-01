@@ -32,6 +32,6 @@ func initUpdateDeletedByIdPasswordStmt() error {
 		return err
 	}
 
-	updateDeletedByIdStmt = stmt
+	updateDeletedByIdPasswordStmt = stmt
 	return nil
 }
