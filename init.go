@@ -3,7 +3,13 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	pb "github.com/PretendoNetwork/grpc/go/account"
+	"meganex/globals"
+	"os"
+	"strconv"
+	"strings"
+
+	pbaccount "github.com/PretendoNetwork/grpc/go/account"
+	pbfriends "github.com/PretendoNetwork/grpc/go/friends"
 	"github.com/PretendoNetwork/plogger-go"
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
@@ -12,10 +18,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
-	"meganex/globals"
-	"os"
-	"strconv"
-	"strings"
 )
 
 func initConfig() error {
@@ -47,6 +49,9 @@ func init() {
 	accountGRPCHost := os.Getenv(globals.EnvPrefix + "_ACCOUNT_GRPC_HOST")
 	accountGRPCPort := os.Getenv(globals.EnvPrefix + "_ACCOUNT_GRPC_PORT")
 	accountGRPCAPIKey := os.Getenv(globals.EnvPrefix + "_ACCOUNT_GRPC_API_KEY")
+	friendsGRPCHost := os.Getenv(globals.EnvPrefix + "_FRIENDS_GRPC_HOST")
+	friendsGRPCPort := os.Getenv(globals.EnvPrefix + "_FRIENDS_GRPC_PORT")
+	friendsGRPCAPIKey := os.Getenv(globals.EnvPrefix + "_FRIENDS_GRPC_API_KEY")
 	s3Endpoint := os.Getenv(globals.EnvPrefix + "_CONFIG_S3_ENDPOINT")
 	s3AccessKey := os.Getenv(globals.EnvPrefix + "_CONFIG_S3_ACCESS_KEY")
 	s3AccessSecret := os.Getenv(globals.EnvPrefix + "_CONFIG_S3_ACCESS_SECRET")
@@ -119,10 +124,44 @@ func init() {
 		os.Exit(0)
 	}
 
-	globals.GRPCAccountClient = pb.NewAccountClient(globals.GRPCAccountClientConnection)
+	globals.GRPCAccountClient = pbaccount.NewAccountClient(globals.GRPCAccountClientConnection)
 	globals.GRPCAccountCommonMetadata = metadata.Pairs(
 		"X-API-Key", accountGRPCAPIKey,
 	)
+
+	if strings.TrimSpace(friendsGRPCHost) == "" {
+		globals.Logger.Error(globals.EnvPrefix + "_FRIENDS_GRPC_HOST environment variable not set")
+		os.Exit(0)
+	}
+
+	if strings.TrimSpace(friendsGRPCPort) == "" {
+		globals.Logger.Error(globals.EnvPrefix + "_FRIENDS_GRPC_PORT environment variable not set")
+		os.Exit(0)
+	}
+
+	if port, err := strconv.Atoi(friendsGRPCPort); err != nil {
+		globals.Logger.Errorf(globals.EnvPrefix+"_FRIENDS_GRPC_PORT is not a valid port. Expected 0-65535, got %s", friendsGRPCPort)
+		os.Exit(0)
+	} else if port < 0 || port > 65535 {
+		globals.Logger.Errorf(globals.EnvPrefix+"_FRIENDS_GRPC_PORT is not a valid port. Expected 0-65535, got %s", friendsGRPCPort)
+		os.Exit(0)
+	}
+
+	if strings.TrimSpace(friendsGRPCAPIKey) == "" {
+		globals.Logger.Warning("Insecure gRPC server detected. " + globals.EnvPrefix + "_FRIENDS_GRPC_API_KEY environment variable not set")
+	}
+
+	globals.GRPCFriendsClientConnection, err = grpc.NewClient(fmt.Sprintf("dns:%s:%s", friendsGRPCHost, friendsGRPCPort), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		globals.Logger.Criticalf("Failed to connect to friends gRPC server: %v", err)
+		os.Exit(0)
+	}
+
+	globals.GRPCFriendsClient = pbfriends.NewFriendsClient(globals.GRPCFriendsClientConnection)
+	globals.GRPCFriendsCommonMetadata = metadata.Pairs(
+		"X-API-Key", friendsGRPCAPIKey,
+	)
+
 	globals.Postgres, err = sql.Open("postgres", os.Getenv(globals.EnvPrefix+"_POSTGRES_URI"))
 	if err != nil {
 		globals.Logger.Critical(err.Error())

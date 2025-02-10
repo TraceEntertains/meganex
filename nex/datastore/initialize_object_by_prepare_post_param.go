@@ -21,6 +21,25 @@ func InitializeObjectByPreparePostParam(ownerPID types.PID, param datastoretypes
 	now := time.Now()
 	var dataID uint64
 
+	if param.PersistenceInitParam.DeleteLastObject && param.PersistenceInitParam.PersistenceSlotID != 65535 {
+		persistenceTarget := datastoretypes.NewDataStorePersistenceTarget()
+		persistenceTarget.OwnerID = ownerPID
+		persistenceTarget.PersistenceSlotID = param.PersistenceInitParam.PersistenceSlotID
+
+		meta, err := GetObjectInfoByPersistenceTarget(persistenceTarget)
+		if err == nil {
+			err = globals.DatastoreCommon.VerifyObjectPermission(ownerPID, ownerPID, meta.DelPermission)
+			if err != nil {
+				return 0, nex.NewError(nex.ResultCodes.Core.AccessDenied, err.Error())
+			}
+
+			err = globals.DatastoreCommon.DeleteObjectByDataID(meta.DataID)
+			if err != nil {
+				return 0, nex.NewError(nex.ResultCodes.DataStore.SystemFileError, err.Error())
+			}
+		}
+	}
+
 	err := insertObjectStmt.QueryRow(
 		ownerPID,
 		param.Size,
@@ -35,11 +54,12 @@ func InitializeObjectByPreparePostParam(ownerPID types.PID, param datastoretypes
 		param.Period,
 		param.ReferDataID,
 		pq.Array(param.Tags),
-		param.PersistenceInitParam.PersistenceSlotID, // todo DeleteLastObject
+		param.PersistenceInitParam.PersistenceSlotID,
 		pq.Array(param.ExtraData),
 		now,
 		now,
 	).Scan(&dataID)
+
 	if err != nil {
 		return 0, nex.NewError(nex.ResultCodes.DataStore.SystemFileError, err.Error())
 	}

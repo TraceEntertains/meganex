@@ -1,8 +1,9 @@
 package datastore
 
 import (
-	commondatastore "github.com/PretendoNetwork/nex-protocols-common-go/v2/datastore"
 	"meganex/globals"
+
+	commondatastore "github.com/PretendoNetwork/nex-protocols-common-go/v2/datastore"
 )
 
 func NewDatastoreProtocol(protocol *commondatastore.CommonProtocol) error {
@@ -25,6 +26,7 @@ func NewDatastoreProtocol(protocol *commondatastore.CommonProtocol) error {
 	protocol.GetObjectInfoByDataID = GetObjectInfoByDataID
 	protocol.GetObjectInfoByPersistenceTargetWithPassword = GetObjectInfoByPersistenceTargetWithPassword
 	protocol.GetObjectInfoByDataIDWithPassword = GetObjectInfoByDataIDWithPassword
+	protocol.GetObjectInfosByDataStoreSearchParam = GetObjectInfosByDataStoreSearchParam
 
 	protocol.GetObjectOwnerByDataID = GetObjectOwnerByDataID
 	protocol.GetObjectSizeByDataID = GetObjectSizeByDataID
@@ -36,6 +38,7 @@ func NewDatastoreProtocol(protocol *commondatastore.CommonProtocol) error {
 
 	protocol.DeleteObjectByDataID = DeleteObjectByDataID
 	protocol.DeleteObjectByDataIDWithPassword = DeleteObjectByDataIDWithPassword
+
 	return nil
 }
 

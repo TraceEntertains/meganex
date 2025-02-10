@@ -3,10 +3,11 @@ package datastore
 import (
 	"database/sql"
 	"errors"
+	"meganex/globals"
+
 	"github.com/PretendoNetwork/nex-go/v2"
 	"github.com/PretendoNetwork/nex-go/v2/types"
 	datastoretypes "github.com/PretendoNetwork/nex-protocols-go/v2/datastore/types"
-	"meganex/globals"
 )
 
 var selectObjectByOwnerPersistenceStmt *sql.Stmt
@@ -31,10 +32,9 @@ func GetObjectInfoByPersistenceTargetWithPassword(persistenceTarget datastoretyp
 }
 
 func initSelectObjectByOwnerPersistenceStmt() error {
-	// hack: order by data_id gets around the whole DeleteLastObject thing
 	stmt, err := Database.Prepare(selectObject + `
-		WHERE owner = $1 AND persistence_slot_id = $2 AND access_password = $3
-		ORDER BY data_id DESC LIMIT 1
+		WHERE owner = $1 AND persistence_slot_id = $2 AND access_password = $3 AND deleted = 'false'
+		LIMIT 1
 	`)
 	if err != nil {
 		return err

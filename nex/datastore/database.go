@@ -2,11 +2,12 @@ package datastore
 
 import (
 	"database/sql"
+	"meganex/globals"
+	"time"
+
 	"github.com/PretendoNetwork/nex-go/v2/types"
 	datastoretypes "github.com/PretendoNetwork/nex-protocols-go/v2/datastore/types"
 	"github.com/lib/pq"
-	"meganex/globals"
-	"time"
 )
 
 var Database *sql.DB
@@ -14,18 +15,20 @@ var Database *sql.DB
 func initDatabase() error {
 	inits := []func() error{
 		initTables,
-		initInsertObjectStmt,                   // initialize_object_by_prepare_post_param.go
-		initSelectObjectByIdPasswordStmt,       // get_object_info_by_data_id_with_password.go
-		initSelectObjectByOwnerPersistenceStmt, // get_object_info_by_persistence_target_with_password.go
-		initSelectObjectByIdStmt,               // get_object_info_by_data_id.go
-		initSelectOwnerByIdStmt,                // get_object_owner_by_data_id.go
-		initSelectSizeByIdStmt,                 // get_object_size_by_data_id.go
-		initUpdateUploadCompleteByIdStmt,       // update_object_upload_completed_by_data_id.go
-		initUpdateMetaBinaryByIdPasswordStmt,   // update_object_meta_binary_by_data_id_with_password.go
-		initUpdatePeriodByIdPasswordStmt,       // update_object_period_by_data_id_with_password.go
-		initUpdateDataTypeByIdPasswordStmt,     // update_object_data_type_by_data_id_with_password.go
-		initUpdateDeletedByIdStmt,              // delete_object_by_data_id.go
-		initUpdateDeletedByIdPasswordStmt,      // delete_object_by_data_id_with_password.go
+		initInsertObjectStmt,                         // initialize_object_by_prepare_post_param.go
+		initSelectObjectByIdPasswordStmt,             // get_object_info_by_data_id_with_password.go
+		initSelectObjectByOwnerPersistenceNoPassStmt, // get_object_info_by_persistence_target.go
+		initSelectObjectByOwnerPersistenceStmt,       // get_object_info_by_persistence_target_with_password.go
+		initSelectObjectByIdStmt,                     // get_object_info_by_data_id.go
+		initSelectObjectsBySearchParamStmt,           // get_object_infos_by_data_store_search_param.go
+		initSelectOwnerByIdStmt,                      // get_object_owner_by_data_id.go
+		initSelectSizeByIdStmt,                       // get_object_size_by_data_id.go
+		initUpdateUploadCompleteByIdStmt,             // update_object_upload_completed_by_data_id.go
+		initUpdateMetaBinaryByIdPasswordStmt,         // update_object_meta_binary_by_data_id_with_password.go
+		initUpdatePeriodByIdPasswordStmt,             // update_object_period_by_data_id_with_password.go
+		initUpdateDataTypeByIdPasswordStmt,           // update_object_data_type_by_data_id_with_password.go
+		initUpdateDeletedByIdStmt,                    // delete_object_by_data_id.go
+		initUpdateDeletedByIdPasswordStmt,            // delete_object_by_data_id_with_password.go
 	}
 
 	for _, init := range inits {
@@ -129,7 +132,9 @@ func getObjects(stmt *sql.Stmt, args ...any) ([]datastoretypes.DataStoreMetaInfo
 		var updatedTime time.Time
 
 		// TODO check this - it's stolen from SMM DataStore but seems fifty shades of fucked up for a generic impl
-		result.ExpireTime = types.NewDateTime(0x9C3f3E0000) // * 9999-12-31T00:00:00.000Z. This is what the real server sends
+		result.ExpireTime = types.NewDateTime(0x9C3F3E0000) // * 9999-12-31T00:00:00.000Z. This is what the real server sends
+
+		var tagArray []string
 
 		err := rows.Scan(
 			&result.DataID,
@@ -145,7 +150,7 @@ func getObjects(stmt *sql.Stmt, args ...any) ([]datastoretypes.DataStoreMetaInfo
 			&result.Flag,
 			&result.Period,
 			&result.ReferDataID,
-			pq.Array(&result.Tags),
+			pq.Array(&tagArray),
 			&createdTime,
 			&updatedTime,
 		)
@@ -153,6 +158,10 @@ func getObjects(stmt *sql.Stmt, args ...any) ([]datastoretypes.DataStoreMetaInfo
 			return nil, err
 			//globals.Logger.Error(err.Error())
 			//continue
+		}
+
+		for i := 0; i < len(tagArray); i++ {
+			result.Tags = append(result.Tags, types.String(tagArray[i]))
 		}
 
 		// I'm not sure how this API is meant to be used but this works

@@ -2,11 +2,12 @@ package nex
 
 import (
 	"fmt"
-	"github.com/PretendoNetwork/nex-go/v2"
-	common_globals "github.com/PretendoNetwork/nex-protocols-common-go/v2/globals"
 	"meganex/globals"
 	"slices"
 	"strings"
+
+	"github.com/PretendoNetwork/nex-go/v2"
+	common_globals "github.com/PretendoNetwork/nex-protocols-common-go/v2/globals"
 )
 
 func StartSecureServer() {
@@ -25,7 +26,7 @@ func StartSecureServer() {
 	globals.SecureEndpoint.OnData(func(packet nex.PacketInterface) {
 		request := packet.RMCMessage()
 
-		header := fmt.Sprintf("==%v - Secure==", globals.NexConfig.GameName)
+		header := fmt.Sprintf("== %v - Secure ==", globals.NexConfig.GameName)
 		globals.Logger.Info(header)
 		globals.Logger.Infof("Protocol ID: %d", request.ProtocolID)
 		globals.Logger.Infof("Method ID: %d", request.MethodID)

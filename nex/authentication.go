@@ -2,9 +2,10 @@ package nex
 
 import (
 	"fmt"
-	"github.com/PretendoNetwork/nex-go/v2"
 	"meganex/globals"
 	"strings"
+
+	"github.com/PretendoNetwork/nex-go/v2"
 )
 
 func StartAuthenticationServer() {
@@ -22,7 +23,7 @@ func StartAuthenticationServer() {
 	globals.AuthenticationEndpoint.OnData(func(packet nex.PacketInterface) {
 		request := packet.RMCMessage()
 
-		header := fmt.Sprintf("==%v - Auth==", globals.NexConfig.GameName)
+		header := fmt.Sprintf("== %v - Auth ==", globals.NexConfig.GameName)
 		globals.Logger.Info(header)
 		globals.Logger.Infof("Protocol ID: %d", request.ProtocolID)
 		globals.Logger.Infof("Method ID: %d", request.MethodID)

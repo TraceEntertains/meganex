@@ -1,8 +1,9 @@
 package nex
 
 import (
-	"github.com/PretendoNetwork/nex-go/v2/types"
 	"meganex/globals"
+
+	"github.com/PretendoNetwork/nex-go/v2/types"
 
 	commonsecure "github.com/PretendoNetwork/nex-protocols-common-go/v2/secure-connection"
 	secure "github.com/PretendoNetwork/nex-protocols-go/v2/secure-connection"
@@ -98,10 +99,12 @@ var SecureProtocols = map[string]ProtocolHandler{
 	}},
 	"datastore": {115, func() {
 		datastoreProtocol := datastore.NewProtocol()
+		datastoreProtocol.SetHandlerDeleteObjects(megadatastore.DeleteObjects)
 		globals.SecureEndpoint.RegisterServiceProtocol(datastoreProtocol)
-		commonDatastoreProtocol := commondatastore.NewCommonProtocol(datastoreProtocol)
+		globals.DatastoreCommon = commondatastore.NewCommonProtocol(datastoreProtocol)
+		globals.DatastoreCommon.GetUserFriendPIDs = globals.GetUserFriendPIDs
 		megadatastore.Database = globals.Postgres
-		err := megadatastore.NewDatastoreProtocol(commonDatastoreProtocol)
+		err := megadatastore.NewDatastoreProtocol(globals.DatastoreCommon)
 		if err != nil {
 			globals.Logger.Error(err.Error())
 		}

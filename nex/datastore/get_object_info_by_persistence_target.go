@@ -6,18 +6,17 @@ import (
 	"meganex/globals"
 
 	"github.com/PretendoNetwork/nex-go/v2"
-	"github.com/PretendoNetwork/nex-go/v2/types"
 	datastoretypes "github.com/PretendoNetwork/nex-protocols-go/v2/datastore/types"
 )
 
-var selectObjectByIdPasswordStmt *sql.Stmt
+var selectObjectByOwnerPersistenceNoPassStmt *sql.Stmt
 
-func GetObjectInfoByDataIDWithPassword(dataID types.UInt64, password types.UInt64) (datastoretypes.DataStoreMetaInfo, *nex.Error) {
+func GetObjectInfoByPersistenceTarget(persistenceTarget datastoretypes.DataStorePersistenceTarget) (datastoretypes.DataStoreMetaInfo, *nex.Error) {
 	if globals.NexConfig.DatastoreTrace {
-		globals.Logger.Infof("dataID: %v\npassword: %v", dataID, password)
+		globals.Logger.Infof("persistenceTarget: %v", persistenceTarget)
 	}
 
-	objects, err := getObjects(selectObjectByIdPasswordStmt, dataID, password)
+	objects, err := getObjects(selectObjectByOwnerPersistenceNoPassStmt, persistenceTarget.OwnerID, persistenceTarget.PersistenceSlotID)
 	if errors.Is(err, sql.ErrNoRows) || len(objects) < 1 {
 		// todo nex.ResultCodes.DataStore.InvalidPassword return?
 		return datastoretypes.NewDataStoreMetaInfo(), nex.NewError(nex.ResultCodes.DataStore.NotFound, "Object not found or wrong password")
@@ -31,12 +30,15 @@ func GetObjectInfoByDataIDWithPassword(dataID types.UInt64, password types.UInt6
 	return objects[0], nil
 }
 
-func initSelectObjectByIdPasswordStmt() error {
-	stmt, err := Database.Prepare(selectObject + ` WHERE data_id = $1 AND access_password = $2 AND deleted = 'false' LIMIT 1`)
+func initSelectObjectByOwnerPersistenceNoPassStmt() error {
+	stmt, err := Database.Prepare(selectObject + `
+		WHERE owner = $1 AND persistence_slot_id = $2 AND deleted = 'false'
+		LIMIT 1
+	`)
 	if err != nil {
 		return err
 	}
 
-	selectObjectByIdPasswordStmt = stmt
+	selectObjectByOwnerPersistenceNoPassStmt = stmt
 	return nil
 }

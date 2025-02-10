@@ -2,8 +2,9 @@ package globals
 
 import (
 	"fmt"
-	"github.com/PretendoNetwork/nex-go/v2"
 	"strings"
+
+	"github.com/PretendoNetwork/nex-go/v2"
 )
 
 const EnvPrefix string = "PN_MEGANEX"
