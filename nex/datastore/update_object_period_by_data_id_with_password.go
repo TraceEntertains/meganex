@@ -3,10 +3,11 @@ package datastore
 import (
 	"database/sql"
 	"errors"
-	"github.com/PretendoNetwork/nex-go/v2"
-	"github.com/PretendoNetwork/nex-go/v2/types"
 	"meganex/globals"
 	"time"
+
+	"github.com/PretendoNetwork/nex-go/v2"
+	"github.com/PretendoNetwork/nex-go/v2/types"
 )
 
 var updatePeriodByIdPasswordStmt *sql.Stmt
@@ -16,7 +17,7 @@ func UpdateObjectPeriodByDataIDWithPassword(dataID types.UInt64, period types.UI
 		globals.Logger.Infof("dataID: %v\nperiod: %v\npassword: %v", dataID, period, password)
 	}
 
-	result, err := updatePeriodByIdPasswordStmt.Exec(dataID, password, period, time.Now())
+	result, err := updatePeriodByIdPasswordStmt.Exec(dataID, password, period, time.Now().UTC())
 	if errors.Is(err, sql.ErrNoRows) {
 		return nex.NewError(nex.ResultCodes.DataStore.NotFound, "Object not found or wrong password")
 	} else if err != nil {

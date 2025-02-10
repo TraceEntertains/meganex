@@ -2,17 +2,18 @@ package ranking
 
 import (
 	"database/sql"
+	"time"
+
 	"github.com/PretendoNetwork/nex-go/v2"
 	"github.com/PretendoNetwork/nex-go/v2/types"
 	rankingtypes "github.com/PretendoNetwork/nex-protocols-go/v2/ranking/types"
-	"time"
 )
 
 var insertCategoryStmt *sql.Stmt
 var insertScoreStmt *sql.Stmt
 
 func InsertRankingByPIDAndRankingScoreData(pid types.PID, rankingScoreData rankingtypes.RankingScoreData, uniqueID types.UInt64) error {
-	now := time.Now()
+	now := time.Now().UTC()
 	tx, err := Database.Begin()
 	if err != nil {
 		return nex.NewError(nex.ResultCodes.Core.SystemError, err.Error())

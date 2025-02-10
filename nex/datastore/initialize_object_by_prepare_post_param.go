@@ -18,9 +18,6 @@ func InitializeObjectByPreparePostParam(ownerPID types.PID, param datastoretypes
 		globals.Logger.Infof("ownerPID: %v\nparam: %v", ownerPID, param)
 	}
 
-	now := time.Now()
-	var dataID uint64
-
 	if param.PersistenceInitParam.DeleteLastObject && param.PersistenceInitParam.PersistenceSlotID != 65535 {
 		persistenceTarget := datastoretypes.NewDataStorePersistenceTarget()
 		persistenceTarget.OwnerID = ownerPID
@@ -39,6 +36,9 @@ func InitializeObjectByPreparePostParam(ownerPID types.PID, param datastoretypes
 			}
 		}
 	}
+
+	var dataID uint64
+	now := time.Now().UTC()
 
 	err := insertObjectStmt.QueryRow(
 		ownerPID,

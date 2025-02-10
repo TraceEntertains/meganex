@@ -2,15 +2,16 @@ package ranking
 
 import (
 	"database/sql"
+	"time"
+
 	"github.com/PretendoNetwork/nex-go/v2"
 	"github.com/PretendoNetwork/nex-go/v2/types"
-	"time"
 )
 
 var insertCommonDataStmt *sql.Stmt
 
 func UploadCommonData(pid types.PID, uniqueID types.UInt64, commonData types.Buffer) error {
-	now := time.Now()
+	now := time.Now().UTC()
 	_, err := insertCommonDataStmt.Exec(uniqueID, pid, commonData, now)
 	if err != nil {
 		return nex.NewError(nex.ResultCodes.Core.SystemError, err.Error())

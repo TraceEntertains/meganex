@@ -30,8 +30,8 @@ func GetObjectInfosByDataStoreSearchParam(param datastoretypes.DataStoreSearchPa
 	}
 
 	tagArray := make([]string, len(param.Tags))
-	for i := 0; i < len(param.Tags); i++ {
-		tagArray[i] = param.Tags[i].String()
+	for i := range param.Tags {
+		tagArray = append(tagArray, string(param.Tags[i]))
 	}
 
 	var idArray []int64
@@ -98,16 +98,15 @@ func initSelectObjectsBySearchParamStmt() error {
 		selectObject + ` WHERE (owner = ANY($1) OR cardinality($1) = 0)
 		AND deleted = 'false'
 		AND data_type = $2
-		AND CASE
+		AND (CASE
 		WHEN $3=1 THEN permission = 0
 		WHEN $3=6 THEN permission = 1
-		ELSE true END
+		ELSE true END)
 		AND creation_date BETWEEN $4 AND $5
 		AND update_date BETWEEN $6 AND $7
 		AND refer_data_id = $8
 		AND tags @> $9
-		ORDER BY data_id DESC 
-		LIMIT $10`)
+		ORDER BY data_id DESC LIMIT $10`)
 	if err != nil {
 		return err
 	}
