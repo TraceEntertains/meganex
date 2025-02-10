@@ -93,6 +93,7 @@ func GetObjectInfosByDataStoreSearchParam(param datastoretypes.DataStoreSearchPa
 }
 
 func initSelectObjectsBySearchParamStmt() error {
+	// for context, $3 is the search target, sadly you can't use really enums in postgres code though
 	stmt, err := Database.Prepare(
 		selectObject + ` WHERE (owner = ANY($1) OR cardinality($1) = 0)
 		AND deleted = 'false'

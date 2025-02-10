@@ -108,6 +108,7 @@ const selectObject = `
 		period,
 		refer_data_id,
 		tags,
+		persistence_slot_id,
 		creation_date,
 		update_date
 	FROM datastore.objects`
@@ -130,11 +131,8 @@ func getObjects(stmt *sql.Stmt, args ...any) ([]datastoretypes.DataStoreMetaInfo
 
 		var createdTime time.Time
 		var updatedTime time.Time
-
-		// TODO check this - it's stolen from SMM DataStore but seems fifty shades of fucked up for a generic impl
-		result.ExpireTime = types.NewDateTime(0x9C3F3E0000) // * 9999-12-31T00:00:00.000Z. This is what the real server sends
-
 		var tagArray []string
+		var persistentSlotId uint16
 
 		err := rows.Scan(
 			&result.DataID,
@@ -151,16 +149,35 @@ func getObjects(stmt *sql.Stmt, args ...any) ([]datastoretypes.DataStoreMetaInfo
 			&result.Period,
 			&result.ReferDataID,
 			pq.Array(&tagArray),
+			&persistentSlotId,
 			&createdTime,
 			&updatedTime,
 		)
+
 		if err != nil {
 			return nil, err
 			//globals.Logger.Error(err.Error())
 			//continue
 		}
 
-		for i := 0; i < len(tagArray); i++ {
+		// TODO: is this a good implementation of this?
+
+		// default to never expire (persistent slots)
+		result.ExpireTime = types.NewDateTime(0x9C3F3F7EFB) // 9999-12-31 23:59:59
+		// this isn't vanilla behavior (vanilla is 9999-12-31 00:00:00)
+		// but it should be close enough, and i dont see direct checks
+		// for either of the times in ghidra (don't quote me please)
+
+		// only set it otherwise if object doesn't get persisted
+		if persistentSlotId == 65535 {
+			// this is definitely a bit of a line of code
+			// basically, make a time from the updated time, and add the object's period value as days
+			result.ExpireTime = types.NewDateTime(0).FromTimestamp(updatedTime.AddDate(0, 0, int(result.Period)))
+		}
+
+		// add the tags from tagArray (created because we can't really use NEX types in postgres) to the nex array
+		result.Tags = make(types.List[types.String], len(tagArray))
+		for i := range tagArray {
 			result.Tags = append(result.Tags, types.String(tagArray[i]))
 		}
 
@@ -168,6 +185,8 @@ func getObjects(stmt *sql.Stmt, args ...any) ([]datastoretypes.DataStoreMetaInfo
 		result.CreatedTime = result.CreatedTime.FromTimestamp(createdTime)
 		result.UpdatedTime = result.UpdatedTime.FromTimestamp(updatedTime)
 		result.ReferredTime = result.ReferredTime.FromTimestamp(createdTime)
+		// note from another dev: referred time does seem to equal created(/updated?)
+		// time in packet dumps, so looks good to me!
 
 		results = append(results, result)
 	}
