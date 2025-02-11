@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/PretendoNetwork/nex-go/v2/types"
+	datastoreconstants "github.com/PretendoNetwork/nex-protocols-go/v2/datastore/constants"
 	datastoretypes "github.com/PretendoNetwork/nex-protocols-go/v2/datastore/types"
 	"github.com/lib/pq"
 )
@@ -169,14 +170,15 @@ func getObjects(stmt *sql.Stmt, args ...any) ([]datastoretypes.DataStoreMetaInfo
 		// for either of the times in ghidra (don't quote me please)
 
 		// only set it otherwise if object doesn't get persisted
-		if persistentSlotId == 65535 {
+		if persistentSlotId == datastoreconstants.InvalidPersistenceSlotID {
 			// this is definitely a bit of a line of code
 			// basically, make a time from the updated time, and add the object's period value as days
-			result.ExpireTime = types.NewDateTime(0).FromTimestamp(updatedTime.AddDate(0, 0, int(result.Period)))
+			dateTime := types.NewDateTime(0)
+			result.ExpireTime = dateTime.FromTimestamp(updatedTime.AddDate(0, 0, int(result.Period)))
 		}
 
 		// add the tags from tagArray (created because we can't really use NEX types in postgres) to the nex array
-		result.Tags = make(types.List[types.String], len(tagArray))
+		result.Tags = make(types.List[types.String], 0, len(tagArray))
 		for i := range tagArray {
 			result.Tags = append(result.Tags, types.String(tagArray[i]))
 		}

@@ -31,7 +31,7 @@ func GetObjectInfoByDataID(dataID types.UInt64) (datastoretypes.DataStoreMetaInf
 }
 
 func initSelectObjectByIdStmt() error {
-	stmt, err := Database.Prepare(selectObject + ` WHERE data_id = $1 AND deleted = 'false' LIMIT 1`)
+	stmt, err := Database.Prepare(selectObject + ` WHERE data_id = $1 LIMIT 1`)
 	if err != nil {
 		return err
 	}

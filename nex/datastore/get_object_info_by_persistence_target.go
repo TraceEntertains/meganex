@@ -32,7 +32,7 @@ func GetObjectInfoByPersistenceTarget(persistenceTarget datastoretypes.DataStore
 
 func initSelectObjectByOwnerPersistenceNoPassStmt() error {
 	stmt, err := Database.Prepare(selectObject + `
-		WHERE owner = $1 AND persistence_slot_id = $2 AND deleted = 'false'
+		WHERE owner = $1 AND persistence_slot_id = $2 AND deleted IS FALSE
 		LIMIT 1
 	`)
 	if err != nil {

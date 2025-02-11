@@ -7,6 +7,7 @@ import (
 
 	"github.com/PretendoNetwork/nex-go/v2"
 	types "github.com/PretendoNetwork/nex-go/v2/types"
+	datastoreconstants "github.com/PretendoNetwork/nex-protocols-go/v2/datastore/constants"
 	datastoretypes "github.com/PretendoNetwork/nex-protocols-go/v2/datastore/types"
 	"github.com/lib/pq"
 )
@@ -18,7 +19,7 @@ func InitializeObjectByPreparePostParam(ownerPID types.PID, param datastoretypes
 		globals.Logger.Infof("ownerPID: %v\nparam: %v", ownerPID, param)
 	}
 
-	if param.PersistenceInitParam.DeleteLastObject && param.PersistenceInitParam.PersistenceSlotID != 65535 {
+	if param.PersistenceInitParam.DeleteLastObject && uint16(param.PersistenceInitParam.PersistenceSlotID) != datastoreconstants.InvalidPersistenceSlotID {
 		persistenceTarget := datastoretypes.NewDataStorePersistenceTarget()
 		persistenceTarget.OwnerID = ownerPID
 		persistenceTarget.PersistenceSlotID = param.PersistenceInitParam.PersistenceSlotID

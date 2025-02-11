@@ -32,7 +32,7 @@ func GetObjectInfoByDataIDWithPassword(dataID types.UInt64, password types.UInt6
 }
 
 func initSelectObjectByIdPasswordStmt() error {
-	stmt, err := Database.Prepare(selectObject + ` WHERE data_id = $1 AND access_password = $2 AND deleted = 'false' LIMIT 1`)
+	stmt, err := Database.Prepare(selectObject + ` WHERE data_id = $1 AND access_password = $2 LIMIT 1`)
 	if err != nil {
 		return err
 	}

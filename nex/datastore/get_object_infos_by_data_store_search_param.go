@@ -6,10 +6,9 @@ import (
 	"meganex/globals"
 	"slices"
 
-	datastore_constants "meganex/nex/datastore/constants"
-
 	"github.com/PretendoNetwork/nex-go/v2"
 	"github.com/PretendoNetwork/nex-go/v2/types"
+	datastoreconstants "github.com/PretendoNetwork/nex-protocols-go/v2/datastore/constants"
 	datastoretypes "github.com/PretendoNetwork/nex-protocols-go/v2/datastore/types"
 	"github.com/lib/pq"
 )
@@ -29,20 +28,18 @@ func GetObjectInfosByDataStoreSearchParam(param datastoretypes.DataStoreSearchPa
 		globals.Logger.Infof("param: %s\npid: %s", pid.String(), param.FormatToString(0))
 	}
 
-	tagArray := make([]string, len(param.Tags))
-	for i := range param.Tags {
-		tagArray = append(tagArray, string(param.Tags[i]))
-	}
-
+	var dataTypes []int32
 	var idArray []int64
+	var tagArray []string
 
-	if uint8(param.SearchTarget) == uint8(datastore_constants.SearchTypeFriend) {
+	// use one search id array to pass to postgres and make our lives Significantly Easier:tm:
+	if uint8(param.SearchTarget) == uint8(datastoreconstants.SearchTypeFriend) {
 		pids := globals.GetUserFriendPIDs(uint32(pid))
 
 		// this is guessed behavior, it probably is just filtered to friends only with param.OwnerIDs ignored on official servers but no evidence for now
 		// if we arent trying to filter then copy over the pids to idArray
 		if len(param.OwnerIDs) == 0 {
-			idArray = make([]int64, len(pids))
+			idArray = make([]int64, 0, len(pids))
 			for i := range pids {
 				idArray = append(idArray, int64(pids[i]))
 			}
@@ -56,27 +53,43 @@ func GetObjectInfosByDataStoreSearchParam(param datastoretypes.DataStoreSearchPa
 			}
 		}
 	} else {
-		idArray = make([]int64, len(param.OwnerIDs))
+		idArray = make([]int64, 0, len(param.OwnerIDs))
 		for i := range param.OwnerIDs {
 			idArray = append(idArray, int64(param.OwnerIDs[i]))
 		}
 	}
 
-	if uint8(param.SearchTarget) == uint8(datastore_constants.SearchTypeOwnAll) {
+	if uint8(param.SearchTarget) == uint8(datastoreconstants.SearchTypeOwnAll) {
 		idArray = append(idArray, int64(pid))
+	}
+
+	// handle param.DataType vs param.DataTypes
+	if len(param.DataTypes) != 0 {
+		dataTypes = make([]int32, 0, len(param.DataTypes))
+		for i := range param.DataTypes {
+			dataTypes = append(dataTypes, int32(param.DataTypes[i]))
+		}
+	} else {
+		dataTypes = append(dataTypes, int32(param.DataType))
+	}
+
+	// convert param.Tags into a proper string array
+	tagArray = make([]string, 0, len(param.Tags))
+	for i := range param.Tags {
+		// types.String.String() escapes which is Not Good:tm:
+		tagArray = append(tagArray, string(param.Tags[i]))
 	}
 
 	objects, err := getObjects(selectObjectsBySearchParamStmt,
 		pq.Int64Array(idArray),
-		uint16(param.DataType),
-		uint8(param.SearchTarget),
+		pq.Int32Array(dataTypes),
 		pq.FormatTimestamp(param.CreatedAfter.Standard()),
 		pq.FormatTimestamp(param.CreatedBefore.Standard()),
 		pq.FormatTimestamp(param.UpdatedAfter.Standard()),
 		pq.FormatTimestamp(param.UpdatedBefore.Standard()),
-		uint32(param.ReferDataID),
+		int64(param.ReferDataID),
 		pq.StringArray(tagArray),
-		uint32(param.ResultRange.Length))
+		int64(param.ResultRange.Length))
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return []datastoretypes.DataStoreMetaInfo{}, 0, nil
@@ -85,28 +98,26 @@ func GetObjectInfosByDataStoreSearchParam(param datastoretypes.DataStoreSearchPa
 	}
 
 	if globals.NexConfig.DatastoreTrace {
-		//globals.Logger.Infof("result: %v", objects)
-		globals.Logger.Infof("object count: %v", len(objects))
+		globals.Logger.Infof("object count: %d", len(objects))
+		for i := range objects {
+			globals.Logger.Infof("objects: %s", objects[i].FormatToString(0))
+		}
 	}
 
 	return objects, uint32(len(objects)), nil
 }
 
 func initSelectObjectsBySearchParamStmt() error {
-	// for context, $3 is the search target, sadly you can't use really enums in postgres code though
 	stmt, err := Database.Prepare(
 		selectObject + ` WHERE (owner = ANY($1) OR cardinality($1) = 0)
-		AND deleted = 'false'
-		AND data_type = $2
-		AND (CASE
-		WHEN $3=1 THEN permission = 0
-		WHEN $3=6 THEN permission = 1
-		ELSE true END)
-		AND creation_date BETWEEN $4 AND $5
-		AND update_date BETWEEN $6 AND $7
-		AND refer_data_id = $8
-		AND tags @> $9
-		ORDER BY data_id DESC LIMIT $10`)
+		AND data_type = ANY($2)
+		AND creation_date BETWEEN $3 AND $4
+		AND update_date BETWEEN $5 AND $6
+		AND refer_data_id = $7
+		AND tags @> $8
+		AND deleted IS FALSE
+		ORDER BY data_id DESC
+		LIMIT $9`)
 	if err != nil {
 		return err
 	}

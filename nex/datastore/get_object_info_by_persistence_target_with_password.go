@@ -33,7 +33,7 @@ func GetObjectInfoByPersistenceTargetWithPassword(persistenceTarget datastoretyp
 
 func initSelectObjectByOwnerPersistenceStmt() error {
 	stmt, err := Database.Prepare(selectObject + `
-		WHERE owner = $1 AND persistence_slot_id = $2 AND access_password = $3 AND deleted = 'false'
+		WHERE owner = $1 AND persistence_slot_id = $2 AND access_password = $3 AND deleted IS FALSE
 		LIMIT 1
 	`)
 	if err != nil {
